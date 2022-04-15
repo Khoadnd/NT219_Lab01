@@ -16,9 +16,9 @@ int main() {
     std::string plaintext;
     std::string key;
     std::cout << "Enter plaintext: ";
-    std::cin >> plaintext;
+    std::getline(std::cin, plaintext);
     std::cout << "Enter key: ";
-    std::cin >> key;
+    std::getline(std::cin, key);
     std::cout << "Encrypted: " << Encrypt(plaintext, key) << std::endl;
   } break;
 
@@ -26,9 +26,9 @@ int main() {
     std::string ciphertext;
     std::string key;
     std::cout << "Enter ciphertext: ";
-    std::cin >> ciphertext;
+    std::getline(std::cin, ciphertext);
     std::cout << "Enter key: ";
-    std::cin >> key;
+    std::getline(std::cin, key);
     std::cout << "Decrypted: " << Decrypt(ciphertext, key) << std::endl;
   } break;
 

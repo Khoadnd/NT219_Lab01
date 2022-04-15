@@ -40,13 +40,13 @@ int main() {
 std::string Decrypt(std::string secret) {
   std::string decryptedData = "";
   for (int i = 1; i < 26; i++)
-    decryptedData.append("k = " + std::to_string(26 - i) + ": " +
+    decryptedData.append("k = " + std::to_string(i) + ": " +
                          Encrypt(secret, 26 - i) + "\n\n");
   return decryptedData;
 }
 
 std::string Decrypt(std::string secret, int key) {
-  return Encrypt(secret, key);
+  return Encrypt(secret, 26 - key);
 }
 
 std::string Encrypt(std::string plaintext, int key) {

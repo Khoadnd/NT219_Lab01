@@ -14,6 +14,17 @@ const std::vector<char> gen_key(std::string _key);
 const std::string Decrypt(const std::string _secret, const std::string _key);
 const std::string Encrypt(const std::string _plaintext, const std::string _key);
 
+const auto Removespace = [](const std::string _string) -> const std::string {
+  return std::regex_replace(_string, std::regex("\\s+"), "");
+};
+
+const auto ToUpperString = [](const std::string _string) -> const std::string {
+  std::string result = "";
+  for (auto c : _string)
+    result += toupper(c);
+  return result;
+};
+
 int main() {
   std::cout << cmenu;
 
@@ -28,6 +39,13 @@ int main() {
     std::getline(std::cin, plaintext);
     std::cout << "Enter key: ";
     std::getline(std::cin, key);
+    std::vector<char> key_vec = gen_key(ToUpperString(Removespace(key)));
+    int count = 1;
+    for (auto i : key_vec) {
+      std::cout << i << " ";
+      if (count++ % 5 == 0)
+        std::cout << std::endl;
+    }
     std::cout << "Encrypted: " << Encrypt(plaintext, key) << std::endl;
   } break;
 
@@ -38,6 +56,13 @@ int main() {
     std::getline(std::cin, ciphertext);
     std::cout << "Enter key: ";
     std::getline(std::cin, key);
+    std::vector<char> key_vec = gen_key(ToUpperString(Removespace(key)));
+    int count = 1;
+    for (auto i : key_vec) {
+      std::cout << i << " ";
+      if (count++ % 5 == 0)
+        std::cout << std::endl;
+    }
     std::cout << "Decrypted: " << Decrypt(ciphertext, key) << std::endl;
   } break;
 
@@ -48,26 +73,8 @@ int main() {
   return 0;
 }
 
-const auto Removespace = [](const std::string _string) -> const std::string {
-  return std::regex_replace(_string, std::regex("\\s+"), "");
-};
-
-const auto ToUpperString = [](const std::string _string) -> const std::string {
-  std::string result = "";
-  for (auto c : _string)
-    result += toupper(c);
-  return result;
-};
-
-/**
- * @brief Divide string into groups of two characters. If the two characters are
- * the same, append with an X
- *
- * @param _s
- * @return const std::string
- */
 const std::string Divide(std::string _s) {
-  std::string result;
+  std::string result = "";
   for (int i = 0; i < _s.length(); i += 2)
     if (_s[i] == _s[i + 1]) {
       result += _s[i];
@@ -78,18 +85,29 @@ const std::string Divide(std::string _s) {
       result += _s[i + 1];
     }
 
+  if (_s.length() % 2)
+    result.pop_back();
   if (result.length() % 2)
-    result += 'X';
+    result += "X";
 
   return result;
 }
 
-/**
- * @brief Gen 5x5 key matrix, matrix duoc bieu dien duoi dang mang 1 chieu
- *
- * @param _key
- * @return const std::vector<char>
- */
+template <typename ForwardIterator>
+ForwardIterator remove_duplicates(ForwardIterator first, ForwardIterator last) {
+  auto new_last = first;
+
+  for (auto current = first; current != last; ++current) {
+    if (std::find(first, new_last, *current) == new_last) {
+      if (new_last != current)
+        *new_last = *current;
+      ++new_last;
+    }
+  }
+
+  return new_last;
+}
+
 const std::vector<char> gen_key(std::string _key) {
   std::vector<char> key_matrix;
 
@@ -97,13 +115,19 @@ const std::vector<char> gen_key(std::string _key) {
   std::for_each(_key.begin(), _key.end(),
                 [&key_matrix](char &c) { key_matrix.push_back(c); });
 
+  key_matrix.erase(remove_duplicates(key_matrix.begin(), key_matrix.end()),
+                   key_matrix.end());
+
   // Them bang chu cai vao matrix
   key_matrix.insert(key_matrix.end(), _Alphabet.begin(), _Alphabet.end());
 
   // xoa cac ky tu lap lai
-  std::remove_if(
-      key_matrix.begin() + _key.length(), key_matrix.end(),
-      [&_key](char &c) { return _key.find(c) != std::string::npos; });
+  // std::remove_if(
+  //     key_matrix.begin() + _key.length(), key_matrix.end(),
+  //     [&_key](char &c) { return _key.find(c) != std::string::npos; });
+
+  key_matrix.erase(remove_duplicates(key_matrix.begin(), key_matrix.end()),
+                   key_matrix.end());
 
   // resize 5x5
   key_matrix.resize(25);
@@ -115,8 +139,8 @@ const std::string Encrypt(const std::string _plaintext,
   std::string result;
   std::string plainttext = Divide(ToUpperString(Removespace(_plaintext)));
   std::string key = ToUpperString(Removespace(_key));
-  std::replace(plainttext.begin(), plainttext.end(), 'J', 'I');
-  std::replace(key.begin(), key.end(), 'J', 'I');
+  std::replace(plainttext.begin(), plainttext.end(), 'J', 'K');
+  std::replace(key.begin(), key.end(), 'J', 'K');
 
   std::vector<char> key_matrix = gen_key(key);
 
@@ -130,21 +154,21 @@ const std::string Encrypt(const std::string _plaintext,
 
     // same row
     if ((int)(pos1 / 5) == (int)(pos2 / 5)) {
-      result += key_matrix[((int)(pos1 / 5) * 5) + (pos1 + 1) % 5];
-      result += key_matrix[((int)(pos2 / 5) * 5) + (pos2 + 1) % 5];
+      result += key_matrix[(((int)(pos1 / 5) * 5) + (pos1 + 1) % 5) % 25];
+      result += key_matrix[(((int)(pos2 / 5) * 5) + (pos2 + 1) % 5) % 25];
       continue;
     }
 
     // same col
     if (pos1 % 5 == pos2 % 5) {
-      result += key_matrix[(((int)(pos1 / 5) + 1) * 5) + (pos1 % 5)];
-      result += key_matrix[(((int)(pos2 / 5) + 1) * 5) + (pos2 % 5)];
+      result += key_matrix[((((int)(pos1 / 5) + 1) * 5) + (pos1 % 5)) % 25];
+      result += key_matrix[((((int)(pos2 / 5) + 1) * 5) + (pos2 % 5)) % 25];
       continue;
     }
 
     // rectangle
-    result += key_matrix[((int)(pos1 / 5) * 5) + (pos2 % 5)];
-    result += key_matrix[((int)(pos2 / 5) * 5) + (pos1 % 5)];
+    result += key_matrix[(((int)(pos1 / 5) * 5) + (pos2 % 5)) % 25];
+    result += key_matrix[(((int)(pos2 / 5) * 5) + (pos1 % 5)) % 25];
   }
   return result;
 }
@@ -167,21 +191,25 @@ const std::string Decrypt(const std::string _secret, const std::string _key) {
 
     // same row
     if ((int)(pos1 / 5) == (int)(pos2 / 5)) {
-      result += key_matrix[((int)(pos1 / 5) * 5) + (pos1 - 1) % 5];
-      result += key_matrix[((int)(pos2 / 5) * 5) + (pos2 - 1) % 5];
+      result +=
+          key_matrix[((((int)(pos1 / 5) * 5) + (pos1 - 1) % 5) + 25) % 25];
+      result +=
+          key_matrix[((((int)(pos2 / 5) * 5) + (pos2 - 1) % 5) + 25) % 25];
       continue;
     }
 
     // same col
     if (pos1 % 5 == pos2 % 5) {
-      result += key_matrix[(((int)(pos1 / 5) - 1) * 5) + (pos1 % 5)];
-      result += key_matrix[(((int)(pos2 / 5) - 1) * 5) + (pos2 % 5)];
+      result +=
+          key_matrix[(((((int)(pos1 / 5) - 1) * 5) + (pos1 % 5)) + 25) % 25];
+      result +=
+          key_matrix[(((((int)(pos2 / 5) - 1) * 5) + (pos2 % 5)) + 25) % 25];
       continue;
     }
 
     // rectangle
-    result += key_matrix[((int)(pos1 / 5) * 5) + (pos2 % 5)];
-    result += key_matrix[((int)(pos2 / 5) * 5) + (pos1 % 5)];
+    result += key_matrix[((((int)(pos1 / 5) * 5) + (pos2 % 5)) + 25) % 25];
+    result += key_matrix[((((int)(pos2 / 5) * 5) + (pos1 % 5)) + 25) % 25];
   }
 
   return result;
